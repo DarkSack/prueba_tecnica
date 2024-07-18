@@ -10,24 +10,26 @@ export interface FavoritesState {
   characters: Character[];
 }
 
+export interface SearchBarProps {
+  onSearch: (value: string) => void;
+}
 export interface InfoCharacter {
   id: number;
   name: string;
-  gender: string;
   status: string;
-  image: string;
+  species: string;
+  type: string;
+  gender: string;
   origin: {
     name: string;
-    dimension: string;
-    type: string;
+    type?: string;
+    dimension?: string;
   };
   location: {
     name: string;
-    type: string;
-    dimension: string;
+    type?: string;
+    dimension?: string;
   };
-  episode: { id: string }[];
-}
-export interface SearchBarProps {
-  onSearch: (value: string) => void;
+  image: string;
+  episode: string[];
 }

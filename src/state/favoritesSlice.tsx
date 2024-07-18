@@ -20,7 +20,7 @@ const favoritesSlice = createSlice({
      */
     addFavorite: (state, action: PayloadAction<Character>) => {
       if (state.characters.length >= 5) {
-        state.characters.pop();
+        state.characters.shift();
       }
       state.characters.push(action.payload);
       localStorage.setItem("favorites", JSON.stringify(state.characters));

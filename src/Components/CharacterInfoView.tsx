@@ -1,16 +1,19 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Image, Text, Group, Badge, Grid, Button } from "@mantine/core";
 import { StarFour, Sparkle } from "phosphor-react";
 import { useDispatch } from "react-redux";
 import { addFavorite, removeFavorite } from "../state/favoritesSlice";
 import { InfoCharacter } from "../Interfaces";
 import { GoTo } from "../GlobalTools";
+import { GET_CHARACTER_INFO } from "../GraphQL/GraphQL";
+import { useQuery } from "@apollo/client";
 
-/**
- * CharacterInfoView component displays detailed information about a character
- * and allows the user to add or remove the character from their favorites list.
- */
+interface CharacterData {
+  character: InfoCharacter;
+}
+
 export const CharacterInfoView: React.FC = () => {
+  const [character, setCharacter] = useState<InfoCharacter | null>(null);
   const dispatch = useDispatch();
   const path = window.location.pathname;
   const id = parseInt(path.split("/").pop() || "0", 10);
@@ -19,49 +22,38 @@ export const CharacterInfoView: React.FC = () => {
   const [favorite, setFavorite] = useState(
     favorites.some((fav: { id: number }) => fav.id === id)
   );
+  const { loading, data } = useQuery<CharacterData>(GET_CHARACTER_INFO, {
+    variables: { id },
+  });
 
-  // Mock character data
-  const character: InfoCharacter = {
-    id: 1,
-    origin: {
-      name: "Earth (C-137)",
-      dimension: "Dimension C-137",
-      type: "Planet",
-    },
-    location: {
-      name: "Citadel of Ricks",
-      type: "Space station",
-      dimension: "unknown",
-    },
-    episode: Array.from({ length: 15 }, (_, i) => ({ id: (i + 1).toString() })),
-    name: "Rick Sanchez",
-    gender: "Male",
-    status: "Alive",
-    image: "https://rickandmortyapi.com/api/character/avatar/1.jpeg",
-  };
+  useEffect(() => {
+    if (data && data.character) {
+      setCharacter(data.character);
+    }
+  }, [data]);
+
+  if (loading || !character) {
+    return <div>Loading...</div>;
+  }
 
   // Character data to display
   const characterData = {
     Name: character.name,
     Gender: character.gender,
     Status: character.status,
-    "Episode Number": character.episode.length,
-    "Origin Name": character.origin.name,
+    "Episode Number": character.episode?.length.toString() || "0",
+    "Origin Name": character.origin?.name || "Unknown",
   };
 
   // Location data to display
   const locationData = {
-    "Origin Dimension": character.origin.dimension,
-    "Origin Type": character.origin.type,
-    "Location Name": character.location.name,
-    "Location Type": character.location.type,
-    "Location Dimension": character.location.dimension,
+    "Origin Dimension": character.origin?.dimension || "Unknown",
+    "Origin Type": character.origin?.type || "Unknown",
+    "Location Name": character.location?.name || "Unknown",
+    "Location Type": character.location?.type || "Unknown",
+    "Location Dimension": character.location?.dimension || "Unknown",
   };
 
-  /**
-   * Function to add or remove a favorite character.
-   * @param {InfoCharacter} character - The character to add or remove from favorites.
-   */
   const handleFavorite = (character: InfoCharacter) => {
     if (favorite) {
       dispatch(removeFavorite(character.id));
