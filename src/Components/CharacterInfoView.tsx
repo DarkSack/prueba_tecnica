@@ -20,7 +20,7 @@ export const CharacterInfoView: React.FC = () => {
   const favoritesStored = localStorage.getItem("favorites");
   const favorites = favoritesStored ? JSON.parse(favoritesStored) : [];
   const [favorite, setFavorite] = useState(
-    favorites.some((fav: { id: number }) => fav.id === id)
+    favorites.some((fav: { id: number }) => fav.id == id)
   );
   const { loading, data } = useQuery<CharacterData>(GET_CHARACTER_INFO, {
     variables: { id },
