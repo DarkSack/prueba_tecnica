@@ -1,12 +1,9 @@
+import React, { useState, useEffect, useMemo } from "react";
 import { Badge, Card, Grid, Group, Image, Text } from "@mantine/core";
 import { SearchBar } from "./SearchBar";
-import { useState, useEffect } from "react";
 import { GoTo } from "../GlobalTools";
 import { Character } from "../Interfaces";
 
-/**
- * CharactersView component displays a list of characters that can be searched and reordered via drag-and-drop.
- */
 const CharactersView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [characters, setCharacters] = useState<Character[]>(() => {
@@ -14,31 +11,24 @@ const CharactersView: React.FC = () => {
     return favoritesStored ? JSON.parse(favoritesStored) : [];
   });
 
-  // Update localStorage whenever characters state changes
   useEffect(() => {
     localStorage.setItem("favorites", JSON.stringify(characters));
   }, [characters]);
 
-  // Filter characters based on the search term
-  const filteredCharacters = characters.filter((character) =>
-    [character.name, character.gender, character.status].some((field) =>
-      field.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+  const filteredCharacters = useMemo(
+    () =>
+      characters.filter((character) =>
+        [character.name, character.gender, character.status].some((field) =>
+          field.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      ),
+    [characters, searchTerm]
   );
 
-  /**
-   * Sets the search term in the component's state.
-   * @param {string} value - The search term to be set.
-   */
   const handleSearch = (value: string) => {
     setSearchTerm(value);
   };
 
-  /**
-   * Handles the start of a drag event.
-   * @param {React.DragEvent<HTMLDivElement>} e - The drag event.
-   * @param {number} index - The index of the character being dragged.
-   */
   const handleDragStart = (
     e: React.DragEvent<HTMLDivElement>,
     index: number
@@ -46,34 +36,32 @@ const CharactersView: React.FC = () => {
     e.dataTransfer.setData("text/plain", index.toString());
   };
 
-  /**
-   * Handles the drop event, updating the order of characters based on the dragged item.
-   * @param {React.DragEvent<HTMLDivElement>} e - The drop event.
-   * @param {number} index - The index where the dragged character is dropped.
-   */
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, index: number) => {
-    const draggedIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
-    const updatedCharacters = [...characters];
-    const [draggedCharacter] = updatedCharacters.splice(draggedIndex, 1);
-    updatedCharacters.splice(index, 0, draggedCharacter);
-    setCharacters(updatedCharacters);
+  const handleDrop = (
+    e: React.DragEvent<HTMLDivElement>,
+    dropIndex: number
+  ) => {
+    e.preventDefault();
+    const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+    if (!isNaN(dragIndex) && dragIndex !== dropIndex) {
+      setCharacters((prevCharacters) => {
+        const newCharacters = [...prevCharacters];
+        const [draggedCharacter] = newCharacters.splice(dragIndex, 1);
+        newCharacters.splice(dropIndex, 0, draggedCharacter);
+        return newCharacters;
+      });
+    }
   };
 
-  /**
-   * Prevents the default handling of the dragover event to allow dropping.
-   * @param {React.DragEvent<HTMLDivElement>} e - The dragover event.
-   */
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
-
   return (
     <Grid gutter={{ base: 5, xs: "md", md: "xl", xl: 50 }}>
       <SearchBar onSearch={handleSearch} />
       <Grid.Col span={12} className="flex flex-wrap">
         {filteredCharacters.map((character, index) => (
           <Card
-            key={character.name}
+            key={character.id}
             shadow="sm"
             padding="lg"
             radius="md"
@@ -86,11 +74,7 @@ const CharactersView: React.FC = () => {
             onClick={() => GoTo(`/character/${character.id}`)}
           >
             <Card.Section>
-              <Image
-                src={character.image}
-                height={160}
-                alt={character.name}
-              />
+              <Image src={character.image} height={160} alt={character.name} />
             </Card.Section>
             <Group justify="space-between" mt="md" mb="xs">
               <Text className="capitalize" fw={500}>
